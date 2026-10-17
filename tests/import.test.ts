@@ -1,6 +1,6 @@
 // Parser tests need no database. The last block runs against local FalkorDB with its own throwaway tenants.
 import { afterAll, describe, expect, test } from "bun:test";
-import { getGraph } from "../src/lib/graph/client";
+import { getDb, getGraph, graphName } from "../src/lib/graph/client";
 import { getDataset } from "../src/lib/graph/dataset";
 import { handleImport } from "../src/lib/graph/import-handler";
 import { parseEdgeCsv, SAMPLE_CROWN, sampleCsv, suggestStart } from "../src/lib/graph/import";
@@ -77,6 +77,11 @@ describe("csv reading", () => {
   });
   test("note column is optional", () => {
     expect(ok("type,from,to\nMEMBER_OF,u1,g1\n", ["g1"]).summary.edges).toBe(1);
+  });
+  test("a long run of quotes is read in linear time", () => {
+    const t0 = performance.now();
+    parseEdgeCsv(`${H}MEMBER_OF,a${'b"'.repeat(200_000)},c\n`, ["c"]);
+    expect(performance.now() - t0).toBeLessThan(1000);
   });
   test("unclosed quote", () => {
     expect(bad(`${H}MEMBER_OF,"u1,g1\n`, ["g1"])[0]).toContain("Row 2");
@@ -208,6 +213,13 @@ describe("handleImport", () => {
     expect((invalid.body.errors as string[])[0]).toContain("zzz");
     expect((await handleImport(t, { csv: 5, crown: [] })).status).toBe(400);
     expect((await handleImport(t, { csv: tiny, crown: ["H1"], name: "n".repeat(41) })).status).toBe(400);
+  });
+  test("an import keeps the sandbox expiry", async () => {
+    const t = tenantName();
+    await handleImport(t, { csv: tiny, crown: ["H1"] });
+    const c = await (await getDb()).connection;
+    const left = Number(await c.sendCommand(["TTL", graphName(t)]));
+    expect(left).toBeGreaterThan(0);
   });
   test("a failed import leaves the old graph alone", async () => {
     const t = tenantName();

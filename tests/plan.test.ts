@@ -202,6 +202,15 @@ describe("planToMarkdown", () => {
     const md = planToMarkdown(plan);
     expect(md).toContain("````\nRemove-ADGroupMember ```evil```");
   });
+  test("names are escaped so they cannot turn into links, HTML or broken code spans", () => {
+    const evil = { ...plan, identity: "`u`", steps: [{ ...plan.steps[0], from: "[link](http://x)#1", to: "<svg onload=alert(2)", ticket: { ...plan.steps[0].ticket, title: "Remove [link](http://x)#1 from <svg onload=alert(2)", body: "[link](http://x)#1 inherits <b>y</b>." } }] };
+    const md = planToMarkdown(evil);
+    expect(md).toContain("# Fix plan for `` `u` ``");
+    expect(md).toContain("## 1. Remove \\[link\\](http://x)\\#1 from \\<svg onload=alert(2)");
+    expect(md).toContain("`[link](http://x)#1` to `<svg onload=alert(2)`");
+    expect(md).toContain("\\[link\\](http://x)\\#1 inherits \\<b\\>y\\</b\\>.");
+    expect(md).not.toContain("  "); // no stray double spaces
+  });
   test("company scope talks about users and an empty plan says so", () => {
     const md = planToMarkdown({ ...plan, scope: "company", identity: undefined, before: { paths: 9, users: 4 } });
     expect(md).toContain("Users who can reach the crown jewels: **4** now");

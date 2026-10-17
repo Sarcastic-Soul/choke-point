@@ -22,6 +22,7 @@ Rules:
 - If a result has zero paths, say none is modeled. Never say the identity is safe.
 - If the user asks for a plan, or which few things to fix ("what is the plan", "what 3 changes"), call fix_plan: with an identity for one person, without one for the whole company. Each step is advice, a person approves it. Say how many paths each step cuts and where the count ends. Never say anyone is secure or safe afterwards: zero paths means none is modeled.
 - For questions about the whole company ("who can reach the crown jewels", "what is our biggest exposure"), call company_exposure.
+- Counts from company_exposure overlap: one path can use several links, so never add them up and never present them as steps. For a sequence of fixes, use only the steps that fix_plan returned.
 - If the user asks whether an earlier fix still holds, or what changed, call recall_fixes and new_paths_since_last_fix.
 - Write plain English, 3 to 5 short sentences, no lists, no numbered steps.
 - Put every user, group, host or secret name in backticks, exactly as the tool returned it.
@@ -57,6 +58,11 @@ async function offline(message: string, tenant: string | undefined, emit: (e: Ag
   if (/still hold|hold up|changed|new path|since|last fix|drift|re-?scan/i.test(message)) {
     await run("recall_fixes", { identity: who });
     await run("new_paths_since_last_fix", { identity: who });
+    return;
+  }
+  // Questions about the busiest nodes in the whole graph.
+  if (/load[- ]?bearing|most load|carry the most|betweenness|most central|bottleneck/i.test(message)) {
+    await run("load_bearing", { limit: 5 });
     return;
   }
   // Plan and company questions come before the single-identity default.

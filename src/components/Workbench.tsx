@@ -63,7 +63,7 @@ export function Workbench() {
       setFocus(null);
       setCut(false);
       if (body.status === "unknown_entity") setProblem({ text: `"${who}" is not in the graph.`, suggestions: (body.suggestions as string[]) ?? [] });
-      else setNotice("Could not read the graph. Check that the database is running.");
+      else setNotice(typeof body.error === "string" ? body.error : "Could not read the graph. Check that the database is running.");
       return null;
     }
     setProblem(null);

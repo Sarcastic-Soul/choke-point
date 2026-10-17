@@ -4,6 +4,7 @@ import { allow } from "../guard";
 import { getDataset } from "./dataset";
 import { parseEdgeCsv, suggestStart } from "./import";
 import { importGraph } from "./seed";
+import { keepSandbox } from "../tenant";
 
 const Body = z.object({
   csv: z.string(),
@@ -31,6 +32,8 @@ export async function handleImport(tenant: string, raw: unknown): Promise<Handle
   try {
     const picked = suggestStart(result.data);
     await importGraph(tenant, result.data, { name });
+    // The import deletes and rewrites the graph, which drops its expiry. Without this the sandbox would never expire.
+    await keepSandbox(tenant);
     return {
       status: 200,
       body: { ok: true, summary: result.summary, suggested: picked.suggested, noPaths: picked.noPaths, dataset: await getDataset(tenant) },

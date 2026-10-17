@@ -35,6 +35,11 @@ async function expire(graph: string, seconds: number) {
   return Number(await raw(["EXPIRE", graph, String(seconds)])) === 1;
 }
 
+/** Puts the expiry back on a visitor's graph. Deleting and rewriting a graph (an import) drops the old expiry. */
+export async function keepSandbox(tenant: string) {
+  return expire(graphName(tenant), sandboxTtl());
+}
+
 async function exists(graph: string) {
   return Number(await raw(["EXISTS", graph])) === 1;
 }
@@ -125,16 +130,35 @@ export async function resetSandbox(tenant: string) {
   };
 }
 
+// If the database was emptied (a Cloud restart, say), the shared default graph is gone too. Rebuild it once, so
+// visitors without the cookie, such as scripts and link previews, do not get errors.
+let defaultSeen = 0;
+async function ensureDefault() {
+  if (Date.now() - defaultSeen < REFRESH_EVERY) return;
+  try {
+    if (!(await exists(graphName()))) {
+      if (!(await allow("default-build", 1, 120_000))) return;
+      await seedGraph();
+    }
+    defaultSeen = Date.now();
+  } catch (err) {
+    console.error("default graph check failed", err);
+  }
+}
+
 export async function tenantFor(): Promise<string | undefined> {
   const sid = (await cookies()).get(SANDBOX_COOKIE)?.value;
-  if (!isSid(sid)) return undefined;
-  try {
-    return await ensureSandbox(sid);
-  } catch (err) {
-    // If the sandbox cannot be made, the visitor still gets the shared demo instead of an error page.
-    console.error("sandbox failed", err);
-    return undefined;
+  if (isSid(sid)) {
+    try {
+      const tenant = await ensureSandbox(sid);
+      if (tenant) return tenant;
+    } catch (err) {
+      // If the sandbox cannot be made, the visitor still gets the shared demo instead of an error page.
+      console.error("sandbox failed", err);
+    }
   }
+  await ensureDefault();
+  return undefined;
 }
 
 /** True when the request works on a private sandbox graph, not the shared default. */

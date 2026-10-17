@@ -55,6 +55,18 @@ describe("summarize", () => {
   });
 });
 
+describe("summarize, load ranking and slow queries", () => {
+  test("names the most load-bearing nodes instead of saying there was no result", () => {
+    const text = summarize([{ tool: "load_bearing", input: {}, output: { status: "ok", nodes: [{ name: "IT-Support", kind: "Group", score: 12.5 }, { name: "WS-291", kind: "Host", score: 3 }] } }]);
+    expect(text).toContain("`IT-Support` (group)");
+    expect(text).toContain("`WS-291` (host)");
+  });
+  test("a query that timed out is said plainly", () => {
+    const text = summarize([{ tool: "fix_plan", input: {}, output: { status: "error", error: "The query took too long on this graph." } }]);
+    expect(text).toContain("took too long");
+  });
+});
+
 const planEvidence = (before: number): Evidence => ({
   tool: "fix_plan",
   input: { identity: "alice.moreno", steps: 2 },

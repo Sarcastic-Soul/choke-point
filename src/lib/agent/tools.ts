@@ -3,7 +3,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { draftFix, newPathsSince, recallFixes } from "../graph/fixes";
-import { companyExposure, fixPlan } from "../graph/plan";
+import { companyExposure, fixPlan, isTimeout } from "../graph/plan";
 import {
   attackPaths,
   chokePoints,
@@ -33,7 +33,14 @@ async function check(name: string, tenant?: string): Promise<{ ok: true; name: s
 export function buildTools(tenant: string | undefined, log: (e: Evidence) => void) {
   const wrap = <I, O>(name: string, fn: (input: I) => Promise<O>) =>
     async (input: I) => {
-      const output = await fn(input);
+      let output: O | { status: "error"; error: string };
+      try {
+        output = await fn(input);
+      } catch (err) {
+        // A graph with too many routes can run past the 5 second query limit. That becomes an answer, not a crash.
+        if (!isTimeout(err)) throw err;
+        output = { status: "error", error: "The query took too long on this graph." };
+      }
       log({ tool: name, input, output });
       return output;
     };

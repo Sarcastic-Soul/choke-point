@@ -137,6 +137,11 @@ export function summarize(evidence: Evidence[]): string {
   const since = last(evidence, "new_paths_since_last_fix");
   const recalled = last(evidence, "recall_fixes");
 
+  const failed = evidence.find((e) => (e.output as Out)?.status === "error");
+  if (failed && !evidence.some((e) => (e.output as Out)?.status === "ok")) {
+    return "That query took too long on this graph, so I have no result to report. Try an identity with fewer routes, or a smaller edge list.";
+  }
+
   const anyOk = evidence.some((e) => (e.output as Out)?.status === "ok");
   if (unknown && !anyOk) {
     const o = unknown.output as Out;
@@ -145,6 +150,11 @@ export function summarize(evidence: Evidence[]): string {
   }
 
   const parts: string[] = [];
+  const load = last(evidence, "load_bearing");
+  if (load?.status === "ok" && load.nodes?.length) {
+    const top = (load.nodes as Out[]).slice(0, 5).map((n) => `\`${n.name}\` (${String(n.kind).toLowerCase()})`);
+    parts.push(`The most load-bearing nodes in the graph, by how many shortest routes pass through them, are ${top.join(", ")}.`);
+  }
   const plan = last(evidence, "fix_plan");
   if (plan?.status === "ok") parts.push(planSentences(plan));
   const exposure = last(evidence, "company_exposure");

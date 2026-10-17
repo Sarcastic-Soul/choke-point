@@ -36,16 +36,20 @@ function readRecords(text: string): { records: Rec[]; openQuoteRow?: number } {
   const records: Rec[] = [];
   let fields: string[] = [];
   let field = "";
+  // True while the field holds only spaces so far. Tracked by hand because calling field.trim() on every quote
+  // makes a long run of quotes take quadratic time (a 1 MB file of b"b"b"... took 40 seconds).
+  let blank = true;
   let quoted = false;
   let wasQuoted = false;
   let line = 1;
   let startLine = 1;
   const endRecord = () => {
     fields.push(field);
-    const blank = fields.length === 1 && !wasQuoted && field.trim() === "";
-    if (!blank) records.push({ row: startLine, fields });
+    const empty = fields.length === 1 && !wasQuoted && blank;
+    if (!empty) records.push({ row: startLine, fields });
     fields = [];
     field = "";
+    blank = true;
     wasQuoted = false;
   };
   for (let i = 0; i < text.length; i++) {
@@ -54,25 +58,31 @@ function readRecords(text: string): { records: Rec[]; openQuoteRow?: number } {
       if (c === '"') {
         if (text[i + 1] === '"') {
           field += '"';
+          blank = false;
           i++;
         } else quoted = false;
       } else {
         if (c === "\n") line++;
         field += c;
+        if (blank && c.trim() !== "") blank = false;
       }
-    } else if (c === '"' && field.trim() === "") {
+    } else if (c === '"' && blank) {
       quoted = true;
       wasQuoted = true;
       field = "";
     } else if (c === ",") {
       fields.push(field);
       field = "";
+      blank = true;
     } else if (c === "\n" || c === "\r") {
       if (c === "\r" && text[i + 1] === "\n") i++;
       endRecord();
       line++;
       startLine = line;
-    } else field += c;
+    } else {
+      field += c;
+      if (blank && c.trim() !== "") blank = false;
+    }
   }
   if (quoted) return { records, openQuoteRow: startLine };
   if (field !== "" || fields.length || wasQuoted) endRecord();
