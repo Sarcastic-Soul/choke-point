@@ -23,7 +23,7 @@ Rules:
 - If the user asks whether an earlier fix still holds, or what changed, call recall_fixes and new_paths_since_last_fix.
 - Write plain English, 3 to 5 short sentences, no lists, no numbered steps.
 - Put every user, group, host or secret name in backticks, exactly as the tool returned it.
-- Use only numbers that appear in tool results. Say what a fix is, but never say it has been applied: a person approves it in the interface.`;
+- Write numbers as digits, for example 33, never as words. Use only numbers that appear in tool results. Say what a fix is, but never say it has been applied: a person approves it in the interface.`;
 
 export function hasModel() {
   return Boolean(process.env.GOOGLE_GENERATIVE_AI_API_KEY);

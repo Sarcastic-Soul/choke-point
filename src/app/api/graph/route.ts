@@ -7,7 +7,7 @@ import { chokePoints, pathGraph, resolveEntity } from "@/lib/graph/queries";
 export async function GET(req: NextRequest) {
   const from = req.nextUrl.searchParams.get("from") ?? "";
   const r = await resolveEntity(from);
-  if (!r.found) return Response.json({ status: "unknown_entity", name: from, suggestions: r.suggestions }, { status: 404 });
+  if (!r.found) return Response.json({ status: "unknown_entity", name: from, suggestions: r.suggestions }, { status: 200 });
   const [graph, choke, fixes] = await Promise.all([
     pathGraph(r.entity.name),
     chokePoints(r.entity.name, { top: 5 }),

@@ -31,6 +31,7 @@ export function GraphView({ graph, cutEdge, selected, freshSince, onSelect }: Pr
 
     const instance = cytoscape({
       container: box.current,
+      maxZoom: 1.2,
       userZoomingEnabled: false,
       userPanningEnabled: false,
       boxSelectionEnabled: false,
@@ -69,7 +70,7 @@ export function GraphView({ graph, cutEdge, selected, freshSince, onSelect }: Pr
             "transition-property": "line-color, width, opacity", "transition-duration": window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 450,
           },
         },
-        { selector: "edge[fresh > 0]", style: { "line-color": C.ink, "line-style": "dashed", label: "new", "font-family": family, "font-size": 11, color: C.ink, "text-background-color": C.paper, "text-background-opacity": 1 } },
+        { selector: "edge[fresh > 0]", style: { "line-color": C.ink, "line-style": "dashed", label: "new", "font-family": family, "font-size": 15, color: C.ink, "text-background-color": C.paper, "text-background-opacity": 1 } },
         { selector: "edge.dead", style: { "line-color": C.rule, width: 1.5, "line-style": "dashed", opacity: 0.8 } },
         { selector: "edge.cut", style: { label: "✕", "font-size": 22, color: C.ink, "text-background-color": C.paper, "text-background-opacity": 1, "text-background-padding": "1px", "text-rotation": "none" } },
         { selector: "edge.pick", style: { "underlay-color": C.ink, "underlay-opacity": 0.14, "underlay-padding": 5 } },

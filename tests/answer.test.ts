@@ -30,6 +30,11 @@ describe("validateAnswer", () => {
     const v = validateAnswer("Cut `Backup-Operators` first. `alice.moreno` has 33 paths.", [investigate(33)], names);
     expect(v.ok).toBe(false);
   });
+  test("checks spelled-out numbers too", () => {
+    expect(validateAnswer("`alice.moreno` has thirty of the thirty-three paths cut, leaving three.", [investigate(33)], names).ok).toBe(true);
+    expect(validateAnswer("`alice.moreno` has thirty-four paths.", [investigate(33)], names).ok).toBe(false);
+    expect(validateAnswer("There is one new link on `alice.moreno`.", [investigate(33)], names).ok).toBe(true);
+  });
   test("never calls zero paths safe", () => {
     const v = validateAnswer("`alice.moreno` is safe, there are 0 paths.", [investigate(0)], names);
     expect(v.ok).toBe(false);

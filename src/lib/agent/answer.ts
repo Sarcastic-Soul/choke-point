@@ -34,6 +34,21 @@ export interface Verdict {
   problems: string[];
 }
 
+const ONES = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+const TENS = ["twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+const WORD_VALUE = new Map<string, number>([...ONES.map((w, i) => [w, i + 1] as const), ...TENS.map((w, i) => [w, (i + 2) * 10] as const)]);
+
+// "thirty-three" is 33, "three" is 3. "one" is skipped: "one link" and "one new path" are ordinary English.
+function spelledNumbers(text: string) {
+  const out: { word: string; value: number }[] = [];
+  const re = new RegExp(`\\b(${TENS.join("|")})(?:[- ](${ONES.slice(0, 9).join("|")}))?\\b|\\b(${ONES.slice(1).join("|")})\\b`, "gi");
+  for (const m of text.matchAll(re)) {
+    const value = m[3] ? WORD_VALUE.get(m[3].toLowerCase())! : WORD_VALUE.get(m[1].toLowerCase())! + (m[2] ? WORD_VALUE.get(m[2].toLowerCase())! : 0);
+    out.push({ word: m[0], value });
+  }
+  return out;
+}
+
 // `allNames` are all names in the graph. Names with digits or punctuation are easy to spot in plain text.
 export function validateAnswer(text: string, evidence: Evidence[], allNames: string[]): Verdict {
   const problems: string[] = [];
@@ -54,6 +69,10 @@ export function validateAnswer(text: string, evidence: Evidence[], allNames: str
   for (const m of bare.matchAll(/(?<![\w.])(\d+(?:\.\d+)?)%?(?![\w.])/g)) {
     const n = Number(m[1]);
     if (!seen.numbers.has(n)) problems.push(`the number ${m[1]} did not come from a query`);
+  }
+
+  for (const w of spelledNumbers(bare)) {
+    if (!seen.numbers.has(w.value)) problems.push(`the number "${w.word}" did not come from a query`);
   }
 
   const pathResults = evidence.filter((e) => (e.output as { total?: number })?.total !== undefined);

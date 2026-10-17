@@ -3,6 +3,8 @@
 import { getGraph } from "./client";
 
 export const MAX_DEPTH = 10;
+// Names never contain control characters (NUL, newline, tab). Treat them as "not found".
+const CONTROL = /[\u0000-\u001f\u007f]/;
 
 const RELS = "MEMBER_OF|ADMIN_ON|HAS_SESSION|CAN_READ";
 
@@ -51,6 +53,7 @@ async function ro(tenant: string | undefined, cypher: string, params: Record<str
 
 // 1. Name resolution. Runs before every other tool.
 export async function resolveEntity(name: string, tenant?: string): Promise<Resolution> {
+  if (CONTROL.test(name)) return { found: false, suggestions: [] };
   const exact = await ro(
     tenant,
     `MATCH (n:Entity) WHERE toLower(n.name) = toLower($name)
@@ -145,6 +148,7 @@ export async function whatIfRemove(from: string, edgeId: string, opts: { maxDept
 }
 
 export async function getEdge(edgeId: string, tenant?: string): Promise<EdgeInfo | null> {
+  if (CONTROL.test(edgeId)) return null;
   const rows = await ro(
     tenant,
     `MATCH (a)-[e {id: $id}]->(b)

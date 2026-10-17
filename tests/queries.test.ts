@@ -1,7 +1,7 @@
 // Runs against a local FalkorDB (docker compose up -d). Uses its own tiny graph, tenant "test".
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { dropTiny, seedTiny } from "./helpers";
-import { attackPaths, chokePoints, countPaths, resolveEntity, whatIfRemove } from "../src/lib/graph/queries";
+import { attackPaths, chokePoints, countPaths, getEdge, resolveEntity, whatIfRemove } from "../src/lib/graph/queries";
 
 const T = "test";
 
@@ -27,6 +27,11 @@ describe("tools", () => {
     const r = await resolveEntity("a' }) DETACH DELETE n //", T);
     expect(r.found).toBe(false);
     expect((await resolveEntity("a", T)).found).toBe(true);
+  });
+
+  test("control characters in a name or edge id are treated as not found", async () => {
+    expect((await resolveEntity("a\u0000b", T)).found).toBe(false);
+    expect(await getEdge("a\nb", T)).toBeNull();
   });
 
   test("attackPaths counts both routes and returns the hops", async () => {

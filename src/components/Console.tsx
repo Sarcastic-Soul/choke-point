@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 export type Line =
   | { kind: "you"; text: string }
   | { kind: "tool"; name: string; input: string; rows?: string }
+  | { kind: "note"; text: string }
   | { kind: "bot"; text: string; mode: "model" | "offline"; checked: boolean; problems: string[] };
 
 interface Props {
@@ -35,6 +36,8 @@ export function Console({ lines, busy, identity, onAsk }: Props) {
       {lines.map((l, i) =>
         l.kind === "you" ? (
           <p key={i} className="msg you">{l.text}</p>
+        ) : l.kind === "note" ? (
+          <p key={i} className="msg note" role="alert">{l.text}</p>
         ) : l.kind === "tool" ? (
           <div key={i} className="tool"><b>{l.name}</b> {l.input}{l.rows ? <><br />{l.rows}</> : null}</div>
         ) : (
@@ -51,7 +54,7 @@ export function Console({ lines, busy, identity, onAsk }: Props) {
       {busy && <p role="status" className="muted"><CircleNotch className="spin" size={14} style={{ verticalAlign: -2 }} /> Querying the graph</p>}
       <div ref={end} />
       <form className="ask" onSubmit={(e) => { e.preventDefault(); if (text.trim() && !busy) { onAsk(text.trim()); setText(""); } }}>
-        <input aria-label="Question" value={text} onChange={(e) => setText(e.target.value)} placeholder="Ask about an identity" />
+        <input aria-label="Question" maxLength={500} value={text} onChange={(e) => setText(e.target.value)} placeholder="Ask about an identity" />
         <button className="btn" type="submit" disabled={busy || !text.trim()} aria-label="Send"><PaperPlaneRight size={16} weight="bold" /></button>
       </form>
       <div className="chips">

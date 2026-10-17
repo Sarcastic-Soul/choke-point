@@ -37,6 +37,7 @@ export function Workbench() {
   const [draft, setDraft] = useState<FixDraft | null>(null);
   const [lines, setLines] = useState<Line[]>([]);
   const [busy, setBusy] = useState(false);
+  const [asking, setAsking] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [problem, setProblem] = useState<{ text: string; suggestions: string[] } | null>(null);
   const loadSeq = useRef(0);
@@ -73,17 +74,26 @@ export function Workbench() {
     setDraft(null);
     if (!edgeId) return;
     const { ok, body } = await call(`/api/whatif?from=${encodeURIComponent(who)}&edge=${encodeURIComponent(edgeId)}`);
-    if (seq === pickSeq.current && ok) setDraft(body.draft as FixDraft);
+    if (seq !== pickSeq.current) return;
+    if (ok) setDraft(body.draft as FixDraft);
+    else setNotice("Could not draft the fix ticket for that link. Pick it again.");
   }, []);
 
+  const askingRef = useRef(false);
   const ask = useCallback(async (message: string) => {
-    setBusy(true);
-    setLines((l) => [...l, { kind: "you", text: message }]);
-    const say = (text: string) => setLines((l) => [...l, { kind: "bot", text, mode: "offline", checked: true, problems: [] }]);
+    if (askingRef.current) return;
+    askingRef.current = true;
+    setAsking(true);
+    setLines((l) => [...l, { kind: "you", text: message.length > 120 ? `${message.slice(0, 120)}…` : message }]);
+    const say = (text: string) => setLines((l) => [...l, { kind: "note", text }]);
     try {
       const res = await fetch("/api/agent", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ message }) });
       if (!res.ok || !res.body) {
-        say(res.status === 403 ? "That request was refused." : "The agent could not be reached. Check that the server and the database are running.");
+        say(
+          res.status === 403 ? "That request was refused."
+            : res.status === 400 ? "That question is empty or longer than 500 characters."
+            : "The agent could not be reached. Check that the server and the database are running.",
+        );
       } else {
         const reader = res.body.getReader();
         const dec = new TextDecoder();
@@ -112,7 +122,8 @@ export function Workbench() {
     } catch {
       say("The agent stopped before it finished. Try again.");
     } finally {
-      setBusy(false);
+      askingRef.current = false;
+      setAsking(false);
     }
   }, []);
 
@@ -123,7 +134,7 @@ export function Workbench() {
     const g = await load(who);
     if (g) await pick(g.from, g.choke[0]?.id ?? null);
     setBusy(false);
-    void ask(`${g?.from ?? who} is compromised. What do we fix first?`);
+    void ask(`${g?.from ?? who} is compromised. What do we fix first?`.slice(0, 500));
   }, [load, pick, ask]);
 
   const stats = useMemo(() => {
@@ -197,7 +208,7 @@ export function Workbench() {
         <div>
           <form className="scan" onSubmit={(e) => { e.preventDefault(); if (name.trim() && !busy) void scan(name.trim()); }}>
             <label htmlFor="who">Compromised identity</label>
-            <input id="who" value={name} onChange={(e) => setName(e.target.value)} spellCheck={false} />
+            <input id="who" maxLength={80} value={name} onChange={(e) => setName(e.target.value)} spellCheck={false} />
             <button className="btn" type="submit" disabled={busy || !name.trim()}><MagnifyingGlass size={16} weight="bold" />Trace paths</button>
             {problem && (
               <span className="note">
@@ -216,6 +227,7 @@ export function Workbench() {
               <div className="stage" role="region" aria-label="Attack path graph" tabIndex={0}>
                 <GraphView graph={data} cutEdge={cut ? focus : null} selected={focus} freshSince={freshSince} onSelect={(id) => void pick(data.from, id)} />
               </div>
+              <p className="scroll-hint">Scroll the graph sideways to follow the route to the crown jewels.</p>
               <div className="legend">
                 <span><i className="user" />user</span><span><i className="host" />host</span><span><i className="secret" />secret</span><span><i className="crown" />crown jewel</span>
                 <span><i className="line" />attack route, thicker means more paths</span>
@@ -229,6 +241,9 @@ export function Workbench() {
                     </button>
                   ))}
                 </div>
+              )}
+              {data.choke.length === 0 && (
+                <p className="muted" style={{ marginTop: 14 }}>Every route starts at {data.from} itself, so there is no single link to cut here. Look at the rights this identity already holds.</p>
               )}
               {stats?.edge && (
                 <div className="link">
@@ -247,7 +262,7 @@ export function Workbench() {
         </div>
 
         <aside className="side">
-          <Console lines={lines} busy={busy} identity={data?.from ?? null} onAsk={(t) => void ask(t)} />
+          <Console lines={lines} busy={asking} identity={data?.from ?? null} onAsk={(t) => void ask(t)} />
           <Ticket draft={draft?.edgeId === focus ? draft : null} cut={cut} busy={busy} approved={approved} onApprove={() => void approve()} />
           <Memory fixes={data?.fixes ?? []} busy={busy} onDrift={() => void drift()} onRescan={() => void rescan()} onReset={() => void reset()} />
         </aside>
