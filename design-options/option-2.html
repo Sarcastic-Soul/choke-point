@@ -1,0 +1,81 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Option 2 - Night shift</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet"><style>
+*{box-sizing:border-box;margin:0}
+button{font:inherit;cursor:pointer}
+.graph{width:100%;height:auto;display:block}
+.lbl{font-size:12px}
+code{font-family:var(--mono);font-size:.92em}
+
+:root{--bg:#15120F;--panel:#1D1915;--bone:#ECE4D4;--mute:#8C8372;--line:#3A342B;--hot:#FF5B2E;--disp:'Newsreader',serif;--sans:'IBM Plex Sans',sans-serif;--mono:'IBM Plex Mono',monospace}
+body{background:var(--bg);color:var(--bone);font-family:var(--sans);min-height:100vh;position:relative;overflow:hidden}
+.canvas{position:absolute;inset:0;padding:120px 80px 90px 440px}
+.grid{position:absolute;inset:0;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:48px 48px;opacity:.35}
+.dock{position:absolute;left:28px;top:28px;bottom:28px;width:380px;background:var(--panel);border:1px solid var(--line);padding:22px;display:flex;flex-direction:column;gap:14px;font-size:14px;line-height:1.5;overflow:hidden}
+.dock h1{font:500 26px var(--disp);letter-spacing:-.01em}.dock h1 i{color:var(--hot)}
+.hud{position:absolute;right:44px;top:34px;text-align:right}.hud .row{display:flex;gap:26px;justify-content:flex-end;align-items:baseline}
+.hud b{font:400 96px/1 var(--disp);letter-spacing:-.03em}.hud b.hot{color:var(--hot)}.hud small{display:block;font:11px var(--mono);color:var(--mute);letter-spacing:.08em;text-transform:uppercase}
+.e{fill:none;stroke-width:1.5}.e.main{stroke:var(--hot);stroke-width:2.5}.e.alt{stroke:var(--mute);stroke-dasharray:3 6}.e.choke{stroke:var(--hot);stroke-width:5}
+.n{fill:var(--bg);stroke:var(--bone);stroke-width:1.5}.n.user{fill:var(--bone)}.n.crown{fill:var(--hot);stroke:var(--hot)}.ring{fill:none;stroke:var(--hot);stroke-width:1;opacity:.6}
+.lbl{font-family:var(--mono);fill:var(--bone);font-size:11px}.crownl{fill:var(--hot)}.cut line{stroke:var(--bone);stroke-width:3}
+.msg.you{color:var(--mute)}.msg.bot code{color:var(--hot)}
+.tool{font:11px var(--mono);color:var(--mute)}.tool span{color:var(--bone)}.tool::before{content:'▸ ';color:var(--hot)}
+.ticket{background:var(--bg);border:1px solid var(--line);padding:14px;display:flex;flex-direction:column;gap:8px}.ticket b{font:11px var(--mono);color:var(--hot);letter-spacing:.08em;text-transform:uppercase}.ticket code{font-size:11px;color:var(--mute);overflow-wrap:anywhere}
+.btns{display:flex;gap:8px}.btns button{padding:8px 14px;border:1px solid var(--line);background:none;color:var(--bone);font:500 13px var(--sans)}.btns .go{background:var(--hot);border-color:var(--hot);color:#15120F;font-weight:600}
+</style></head><body><div class="grid"></div><div class="canvas"><svg viewBox="0 0 960 420" class="graph" role="img" aria-label="Attack paths from alice.moreno to DC01">
+<line x1="210" y1="230" x2="350" y2="320" class="e alt"/>
+<line x1="350" y1="320" x2="490" y2="320" class="e alt"/>
+<line x1="490" y1="320" x2="630" y2="320" class="e alt"/>
+<line x1="630" y1="320" x2="770" y2="320" class="e alt"/>
+<line x1="770" y1="320" x2="770" y2="190" class="e alt"/>
+<line x1="70" y1="230" x2="210" y2="230" class="e main"/>
+<line x1="210" y1="230" x2="350" y2="120" class="e main"/>
+<line x1="350" y1="120" x2="490" y2="120" class="e choke"/>
+<line x1="490" y1="120" x2="630" y2="70" class="e main"/>
+<line x1="490" y1="120" x2="630" y2="170" class="e main"/>
+<line x1="630" y1="70" x2="770" y2="110" class="e main"/>
+<line x1="630" y1="170" x2="770" y2="190" class="e main"/>
+<line x1="770" y1="110" x2="880" y2="150" class="e main"/>
+<line x1="770" y1="190" x2="880" y2="150" class="e main"/>
+<line x1="880" y1="150" x2="880" y2="250" class="e main"/>
+<line x1="880" y1="250" x2="880" y2="350" class="e main"/>
+<circle cx="70" cy="230" r="7" class="n user"/>
+<text x="70" y="214" text-anchor="middle" class="lbl ">alice.moreno</text>
+<circle cx="210" cy="230" r="7" class="n group"/>
+<text x="210" y="214" text-anchor="middle" class="lbl ">Marketing-Contractors</text>
+<circle cx="350" cy="120" r="7" class="n group"/>
+<text x="350" y="104" text-anchor="middle" class="lbl ">Legacy-VPN-Users</text>
+<circle cx="490" cy="120" r="7" class="n group"/>
+<text x="490" y="104" text-anchor="middle" class="lbl ">IT-Support</text>
+<circle cx="630" cy="70" r="7" class="n host"/>
+<text x="630" y="54" text-anchor="middle" class="lbl ">JUMP-01</text>
+<circle cx="630" cy="170" r="7" class="n host"/>
+<text x="630" y="154" text-anchor="middle" class="lbl ">JUMP-03</text>
+<circle cx="770" cy="110" r="7" class="n user"/>
+<text x="770" y="94" text-anchor="middle" class="lbl ">adm-ivan</text>
+<circle cx="770" cy="190" r="7" class="n user"/>
+<text x="770" y="174" text-anchor="middle" class="lbl ">adm-kofi</text>
+<circle cx="880" cy="150" r="7" class="n group"/>
+<text x="880" y="134" text-anchor="end" class="lbl ">Tier0-Admins</text>
+<circle cx="880" cy="250" r="7" class="n group"/>
+<text x="880" y="276" text-anchor="end" class="lbl ">Domain Admins</text>
+<circle cx="880" cy="350" r="16" class="ring"/>
+<circle cx="880" cy="350" r="7" class="n crown"/>
+<text x="880" y="384" text-anchor="end" class="lbl crownl">DC01</text>
+<circle cx="350" cy="320" r="7" class="n host"/>
+<text x="350" y="346" text-anchor="middle" class="lbl ">WEB-CMS-01</text>
+<circle cx="490" cy="320" r="7" class="n user"/>
+<text x="490" y="346" text-anchor="middle" class="lbl ">svc-deploy</text>
+<circle cx="630" cy="320" r="7" class="n group"/>
+<text x="630" y="346" text-anchor="middle" class="lbl ">Deploy-Admins</text>
+<circle cx="770" cy="320" r="7" class="n host"/>
+<text x="770" y="346" text-anchor="middle" class="lbl ">BUILD-01</text>
+<g class="cut"><line x1="410.0" y1="108" x2="430.0" y2="132"/><line x1="430.0" y1="108" x2="410.0" y2="132"/></g>
+</svg></div>
+<div class="hud"><div class="row"><div><small>Before</small><b>33</b></div><div><small>After one cut</small><b class="hot">3</b></div></div></div>
+<div class="dock"><h1>Choke <i>Point</i></h1>
+<div class="msg you">alice.moreno's laptop was phished. What can the attacker reach?</div>
+<div class="tool">attack_paths <span>alice.moreno</span></div>
+<div class="tool">choke_points <span>alice.moreno</span></div>
+<div class="tool">what_if_remove <span>Legacy-VPN-Users → IT-Support</span></div>
+<div class="msg bot"><code>alice.moreno</code> has 33 paths to the crown jewels. The best single fix is the link from <code>Legacy-VPN-Users</code> to <code>IT-Support</code>. It sits on 30 of 33 paths. With it removed, paths drop from 33 to 3.</div>
+<div class="ticket"><b>Draft fix</b><span>Remove Legacy-VPN-Users from IT-Support</span><code>Remove-ADGroupMember -Identity "IT-Support" -Members "Legacy-VPN-Users"</code><div class="btns"><button class="go">Approve fix</button><button>Dismiss</button></div></div>
+</div></body></html>

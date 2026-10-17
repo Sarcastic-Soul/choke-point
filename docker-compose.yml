@@ -1,0 +1,13 @@
+# Local FalkorDB for Choke Point. Port 6379 is the database, port 3000 is the FalkorDB Browser.
+services:
+  falkordb:
+    image: falkordb/falkordb:latest
+    ports:
+      - "127.0.0.1:6379:6379"
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - falkordb-data:/var/lib/falkordb/data
+    restart: unless-stopped
+
+volumes:
+  falkordb-data:

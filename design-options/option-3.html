@@ -1,0 +1,82 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Option 3 - Poster</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"><style>
+*{box-sizing:border-box;margin:0}
+button{font:inherit;cursor:pointer}
+.graph{width:100%;height:auto;display:block}
+.lbl{font-size:12px}
+code{font-family:var(--mono);font-size:.92em}
+
+:root{--bg:#ECEAE3;--ink:#0E0E0C;--lime:#C6F01B;--mute:#6C6B63;--disp:'Space Grotesk',sans-serif;--mono:'JetBrains Mono',monospace;--sans:'Space Grotesk',sans-serif}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);min-height:100vh;display:grid;grid-template-columns:420px 1fr;grid-template-rows:auto 1fr}
+.side{grid-row:1/3;background:var(--ink);color:var(--bg);padding:26px;display:flex;flex-direction:column;gap:14px;font-size:14px;line-height:1.5}
+.side h1{font:700 15px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--lime)}
+.numeral{font:700 330px/0.78 var(--disp);letter-spacing:-.08em;margin:18px 0 0 -10px;color:var(--bg)}.numeral em{font-style:normal;color:var(--lime)}
+.cap{font:12px var(--mono);color:#A8A79C;text-transform:uppercase;letter-spacing:.06em}
+.top{display:flex;justify-content:space-between;padding:20px 32px;border-bottom:3px solid var(--ink);font:600 12px var(--mono);text-transform:uppercase;letter-spacing:.08em}
+.stage{padding:20px 32px;position:relative}
+.stage .idx{position:absolute;left:32px;top:14px;font:600 12px var(--mono)}
+.e{fill:none;stroke-width:2}.e.main{stroke:var(--ink);stroke-width:4}.e.alt{stroke:var(--mute);stroke-dasharray:2 6}.e.choke{stroke:var(--lime);stroke-width:9}
+.n{fill:var(--bg);stroke:var(--ink);stroke-width:3}.n.user{fill:var(--ink)}.n.crown{fill:var(--ink);stroke:var(--ink)}.ring{fill:var(--lime);stroke:var(--ink);stroke-width:3}
+.lbl{font-family:var(--mono);fill:var(--ink);font-weight:600;font-size:11.5px}.cut line{stroke:var(--ink);stroke-width:4}
+.msg.you{color:#A8A79C}.msg.bot code{background:var(--lime);color:var(--ink);padding:0 4px}
+.tool{font:11px var(--mono);color:#A8A79C}.tool span{color:var(--bg)}
+.ticket{border:2px solid var(--lime);padding:14px;display:flex;flex-direction:column;gap:8px}.ticket b{font:11px var(--mono);color:var(--lime);letter-spacing:.1em;text-transform:uppercase}.ticket code{font-size:11px;color:#A8A79C;overflow-wrap:anywhere}
+.btns{display:flex;gap:8px}.btns button{padding:9px 14px;border:2px solid var(--bg);background:none;color:var(--bg);font:600 13px var(--sans)}.btns .go{background:var(--lime);border-color:var(--lime);color:var(--ink)}
+</style></head><body><aside class="side"><h1>Choke Point</h1><div class="numeral">33<em>→3</em></div><div class="cap">attack paths to the domain controller, before and after one cut</div>
+<div class="msg you">alice.moreno's laptop was phished. What can the attacker reach?</div>
+<div class="tool">attack_paths <span>alice.moreno</span></div>
+<div class="tool">choke_points <span>alice.moreno</span></div>
+<div class="tool">what_if_remove <span>Legacy-VPN-Users → IT-Support</span></div>
+<div class="msg bot"><code>alice.moreno</code> has 33 paths to the crown jewels. The best single fix is the link from <code>Legacy-VPN-Users</code> to <code>IT-Support</code>. It sits on 30 of 33 paths. With it removed, paths drop from 33 to 3.</div>
+<div class="ticket"><b>Draft fix</b><span>Remove Legacy-VPN-Users from IT-Support</span><code>Remove-ADGroupMember -Identity "IT-Support" -Members "Legacy-VPN-Users"</code><div class="btns"><button class="go">Approve fix</button><button>Dismiss</button></div></div>
+</aside>
+<div class="top"><span>Northwind Freight</span><span>alice.moreno → DC01</span><span>Scan 17 Oct</span></div>
+<main class="stage"><span class="idx">FIG. 1 — ROUTES FROM A PHISHED CONTRACTOR</span><div style="height:20px"></div><svg viewBox="0 0 960 420" class="graph" role="img" aria-label="Attack paths from alice.moreno to DC01">
+<line x1="210" y1="230" x2="350" y2="320" class="e alt"/>
+<line x1="350" y1="320" x2="490" y2="320" class="e alt"/>
+<line x1="490" y1="320" x2="630" y2="320" class="e alt"/>
+<line x1="630" y1="320" x2="770" y2="320" class="e alt"/>
+<line x1="770" y1="320" x2="770" y2="190" class="e alt"/>
+<line x1="70" y1="230" x2="210" y2="230" class="e main"/>
+<line x1="210" y1="230" x2="350" y2="120" class="e main"/>
+<line x1="350" y1="120" x2="490" y2="120" class="e choke"/>
+<line x1="490" y1="120" x2="630" y2="70" class="e main"/>
+<line x1="490" y1="120" x2="630" y2="170" class="e main"/>
+<line x1="630" y1="70" x2="770" y2="110" class="e main"/>
+<line x1="630" y1="170" x2="770" y2="190" class="e main"/>
+<line x1="770" y1="110" x2="880" y2="150" class="e main"/>
+<line x1="770" y1="190" x2="880" y2="150" class="e main"/>
+<line x1="880" y1="150" x2="880" y2="250" class="e main"/>
+<line x1="880" y1="250" x2="880" y2="350" class="e main"/>
+<rect x="62" y="222" width="16" height="16" class="n user"/>
+<text x="70" y="214" text-anchor="middle" class="lbl ">alice.moreno</text>
+<rect x="202" y="222" width="16" height="16" class="n group"/>
+<text x="210" y="214" text-anchor="middle" class="lbl ">Marketing-Contractors</text>
+<rect x="342" y="112" width="16" height="16" class="n group"/>
+<text x="350" y="104" text-anchor="middle" class="lbl ">Legacy-VPN-Users</text>
+<rect x="482" y="112" width="16" height="16" class="n group"/>
+<text x="490" y="104" text-anchor="middle" class="lbl ">IT-Support</text>
+<rect x="622" y="62" width="16" height="16" class="n host"/>
+<text x="630" y="54" text-anchor="middle" class="lbl ">JUMP-01</text>
+<rect x="622" y="162" width="16" height="16" class="n host"/>
+<text x="630" y="154" text-anchor="middle" class="lbl ">JUMP-03</text>
+<rect x="762" y="102" width="16" height="16" class="n user"/>
+<text x="770" y="94" text-anchor="middle" class="lbl ">adm-ivan</text>
+<rect x="762" y="182" width="16" height="16" class="n user"/>
+<text x="770" y="174" text-anchor="middle" class="lbl ">adm-kofi</text>
+<rect x="872" y="142" width="16" height="16" class="n group"/>
+<text x="880" y="134" text-anchor="end" class="lbl ">Tier0-Admins</text>
+<rect x="872" y="242" width="16" height="16" class="n group"/>
+<text x="880" y="276" text-anchor="end" class="lbl ">Domain Admins</text>
+<circle cx="880" cy="350" r="17" class="ring"/>
+<rect x="872" y="342" width="16" height="16" class="n crown"/>
+<text x="880" y="384" text-anchor="end" class="lbl crownl">DC01</text>
+<rect x="342" y="312" width="16" height="16" class="n host"/>
+<text x="350" y="346" text-anchor="middle" class="lbl ">WEB-CMS-01</text>
+<rect x="482" y="312" width="16" height="16" class="n user"/>
+<text x="490" y="346" text-anchor="middle" class="lbl ">svc-deploy</text>
+<rect x="622" y="312" width="16" height="16" class="n group"/>
+<text x="630" y="346" text-anchor="middle" class="lbl ">Deploy-Admins</text>
+<rect x="762" y="312" width="16" height="16" class="n host"/>
+<text x="770" y="346" text-anchor="middle" class="lbl ">BUILD-01</text>
+<g class="cut"><line x1="410.0" y1="108" x2="430.0" y2="132"/><line x1="430.0" y1="108" x2="410.0" y2="132"/></g>
+</svg></main></body></html>

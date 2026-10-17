@@ -1,0 +1,87 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Option 1 - Signal box</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,600&family=IBM+Plex+Mono:wght@400;600&family=Manrope:wght@400;600&display=swap" rel="stylesheet"><style>
+*{box-sizing:border-box;margin:0}
+button{font:inherit;cursor:pointer}
+.graph{width:100%;height:auto;display:block}
+.lbl{font-size:12px}
+code{font-family:var(--mono);font-size:.92em}
+
+:root{--paper:#F2EDE2;--ink:#1E1B16;--mute:#7A7365;--rule:#CFC7B4;--hot:#D2391C;--serif:'Fraunces',serif;--mono:'IBM Plex Mono',monospace;--sans:'Manrope',sans-serif}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);min-height:100vh;padding:28px 40px}
+header{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid var(--ink);padding-bottom:10px}
+header h1{font:600 22px var(--serif);letter-spacing:-.01em}header small{font:12px var(--mono);color:var(--mute)}
+.wrap{display:grid;grid-template-columns:1fr 360px;gap:40px;margin-top:22px}
+.big{display:flex;align-items:baseline;gap:18px}
+.big .a{font:300 150px/0.9 var(--serif);letter-spacing:-.04em;color:var(--mute);text-decoration:line-through;text-decoration-thickness:4px}
+.big .b{font:600 190px/0.9 var(--serif);letter-spacing:-.05em;color:var(--hot)}
+.big p{font:13px var(--mono);max-width:150px;color:var(--mute);align-self:flex-end;padding-bottom:18px}
+.stage{border-top:1px solid var(--rule);margin-top:6px;padding-top:10px}
+.e{stroke-width:1.5;fill:none}.e.main{stroke:var(--hot);stroke-width:3}.e.alt{stroke:var(--mute);stroke-dasharray:4 5}.e.choke{stroke:var(--hot);stroke-width:5}
+.n{fill:var(--paper);stroke:var(--ink);stroke-width:2}.n.user{fill:var(--ink)}.n.crown{fill:var(--hot);stroke:var(--hot)}.ring{fill:none;stroke:var(--hot);stroke-width:1.5}
+.lbl{font-family:var(--mono);fill:var(--ink)}.crownl{fill:var(--hot);font-weight:600}
+.cut line{stroke:var(--ink);stroke-width:3}
+aside{border-left:1px solid var(--ink);padding-left:28px;display:flex;flex-direction:column;gap:14px;font-size:14px;line-height:1.5}
+.msg.you{font:italic 400 18px/1.35 var(--serif)}.msg.bot code{background:#E7DFCD;padding:1px 4px}
+.tool{font:12px var(--mono);color:var(--mute);border-left:3px solid var(--rule);padding-left:10px}.tool span{color:var(--ink)}
+.ticket{border:2px solid var(--ink);padding:14px;display:flex;flex-direction:column;gap:8px}.ticket span{font-weight:600}.ticket code{font-size:11px;background:#E7DFCD;padding:6px;overflow-wrap:anywhere}
+.btns{display:flex;gap:8px}.btns button{padding:8px 14px;border:2px solid var(--ink);background:none;font:600 13px var(--sans)}.btns .go{background:var(--hot);border-color:var(--hot);color:var(--paper)}
+.ask{margin-top:auto;border-top:2px solid var(--ink);padding-top:10px;font:13px var(--mono);color:var(--mute)}
+</style></head><body><header><h1>Choke Point</h1><small>NORTHWIND FREIGHT · 671 nodes · 1,160 edges · scan 17 Oct</small></header>
+<div class="wrap"><main><div class="big"><span class="a">33</span><span class="b">3</span><p>attack paths to the domain controller, before and after one cut</p></div>
+<div class="stage"><svg viewBox="0 0 960 420" class="graph" role="img" aria-label="Attack paths from alice.moreno to DC01">
+<path d="M210,230 H280.0 V320 H350" class="e alt" fill="none"/>
+<path d="M350,320 H420.0 V320 H490" class="e alt" fill="none"/>
+<path d="M490,320 H560.0 V320 H630" class="e alt" fill="none"/>
+<path d="M630,320 H700.0 V320 H770" class="e alt" fill="none"/>
+<path d="M770,320 H770.0 V190 H770" class="e alt" fill="none"/>
+<path d="M70,230 H140.0 V230 H210" class="e main" fill="none"/>
+<path d="M210,230 H280.0 V120 H350" class="e main" fill="none"/>
+<path d="M350,120 H420.0 V120 H490" class="e choke" fill="none"/>
+<path d="M490,120 H560.0 V70 H630" class="e main" fill="none"/>
+<path d="M490,120 H560.0 V170 H630" class="e main" fill="none"/>
+<path d="M630,70 H700.0 V110 H770" class="e main" fill="none"/>
+<path d="M630,170 H700.0 V190 H770" class="e main" fill="none"/>
+<path d="M770,110 H825.0 V150 H880" class="e main" fill="none"/>
+<path d="M770,190 H825.0 V150 H880" class="e main" fill="none"/>
+<path d="M880,150 H880.0 V250 H880" class="e main" fill="none"/>
+<path d="M880,250 H880.0 V350 H880" class="e main" fill="none"/>
+<rect x="64" y="224" width="12" height="12" class="n user"/>
+<text x="70" y="214" text-anchor="middle" class="lbl ">alice.moreno</text>
+<rect x="204" y="224" width="12" height="12" class="n group"/>
+<text x="210" y="214" text-anchor="middle" class="lbl ">Marketing-Contractors</text>
+<rect x="344" y="114" width="12" height="12" class="n group"/>
+<text x="350" y="104" text-anchor="middle" class="lbl ">Legacy-VPN-Users</text>
+<rect x="484" y="114" width="12" height="12" class="n group"/>
+<text x="490" y="104" text-anchor="middle" class="lbl ">IT-Support</text>
+<rect x="624" y="64" width="12" height="12" class="n host"/>
+<text x="630" y="54" text-anchor="middle" class="lbl ">JUMP-01</text>
+<rect x="624" y="164" width="12" height="12" class="n host"/>
+<text x="630" y="154" text-anchor="middle" class="lbl ">JUMP-03</text>
+<rect x="764" y="104" width="12" height="12" class="n user"/>
+<text x="770" y="94" text-anchor="middle" class="lbl ">adm-ivan</text>
+<rect x="764" y="184" width="12" height="12" class="n user"/>
+<text x="770" y="174" text-anchor="middle" class="lbl ">adm-kofi</text>
+<rect x="874" y="144" width="12" height="12" class="n group"/>
+<text x="880" y="134" text-anchor="end" class="lbl ">Tier0-Admins</text>
+<rect x="874" y="244" width="12" height="12" class="n group"/>
+<text x="880" y="276" text-anchor="end" class="lbl ">Domain Admins</text>
+<circle cx="880" cy="350" r="15" class="ring"/>
+<rect x="874" y="344" width="12" height="12" class="n crown"/>
+<text x="880" y="384" text-anchor="end" class="lbl crownl">DC01</text>
+<rect x="344" y="314" width="12" height="12" class="n host"/>
+<text x="350" y="346" text-anchor="middle" class="lbl ">WEB-CMS-01</text>
+<rect x="484" y="314" width="12" height="12" class="n user"/>
+<text x="490" y="346" text-anchor="middle" class="lbl ">svc-deploy</text>
+<rect x="624" y="314" width="12" height="12" class="n group"/>
+<text x="630" y="346" text-anchor="middle" class="lbl ">Deploy-Admins</text>
+<rect x="764" y="314" width="12" height="12" class="n host"/>
+<text x="770" y="346" text-anchor="middle" class="lbl ">BUILD-01</text>
+<g class="cut"><line x1="410.0" y1="108" x2="430.0" y2="132"/><line x1="430.0" y1="108" x2="410.0" y2="132"/></g>
+</svg></div></main>
+<aside>
+<div class="msg you">alice.moreno's laptop was phished. What can the attacker reach?</div>
+<div class="tool">attack_paths <span>alice.moreno</span></div>
+<div class="tool">choke_points <span>alice.moreno</span></div>
+<div class="tool">what_if_remove <span>Legacy-VPN-Users → IT-Support</span></div>
+<div class="msg bot"><code>alice.moreno</code> has 33 paths to the crown jewels. The best single fix is the link from <code>Legacy-VPN-Users</code> to <code>IT-Support</code>. It sits on 30 of 33 paths. With it removed, paths drop from 33 to 3.</div>
+<div class="ticket"><b>Draft fix</b><span>Remove Legacy-VPN-Users from IT-Support</span><code>Remove-ADGroupMember -Identity "IT-Support" -Members "Legacy-VPN-Users"</code><div class="btns"><button class="go">Approve fix</button><button>Dismiss</button></div></div>
+<div class="ask">Ask about an identity…</div></aside></div></body></html>
