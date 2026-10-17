@@ -1,0 +1,17 @@
+/* Shared by CopyButtons and ShareLink. Self-contained: it only borrows the page's colour variables. */
+.cp-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.cp-btn {
+  display: inline-flex; align-items: center; gap: 7px; padding: 6px 11px;
+  border: 2px solid var(--ink, #1e1b16); border-radius: 0; background: transparent;
+  color: var(--ink, #1e1b16); font: 600 12.5px var(--sans, system-ui, sans-serif); cursor: pointer;
+  transition: background 120ms ease-out, color 120ms ease-out;
+}
+.cp-btn:hover:not(:disabled) { background: var(--ink, #1e1b16); color: var(--paper, #f2ede2); }
+.cp-btn:focus-visible { outline: 3px solid var(--ink, #1e1b16); outline-offset: 2px; }
+.cp-btn:disabled { opacity: 0.45; cursor: default; }
+.cp-btn.done { border-color: var(--hot, #c93418); color: var(--hot, #c93418); }
+.cp-btn.done:hover:not(:disabled) { background: var(--hot, #c93418); color: var(--paper, #f2ede2); }
+.cp-status { min-width: 4.5em; font: 12.5px var(--mono, ui-monospace, monospace); color: var(--hot, #c93418); }
+.cp-status.fail { color: var(--ink, #1e1b16); }
+@media (pointer: coarse) { .cp-btn { min-height: 44px; min-width: 44px; padding: 8px 14px; } }
+@media (prefers-reduced-motion: reduce) { .cp-btn { transition: none; } }

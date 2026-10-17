@@ -112,3 +112,5 @@ code, .mono { font-family: var(--mono); font-size: 0.9em; }
 .msg.note { color: var(--hot); font-size: 14px; margin: 0; }
 .scroll-hint { display: none; margin: 4px 0 0; color: var(--mute); font-size: 13px; }
 @media (max-width: 900px) { .scroll-hint { display: block; } }
+
+.share { margin-top: 14px; }

@@ -66,7 +66,7 @@ export function validateAnswer(text: string, evidence: Evidence[], allNames: str
     }
   }
 
-  for (const m of bare.matchAll(/(?<![\w.])(\d+(?:\.\d+)?)%?(?![\w.])/g)) {
+  for (const m of bare.matchAll(/(?<![\w.])(\d+(?:\.\d+)?)%?(?!\w|\.\w)/g)) {
     const n = Number(m[1]);
     if (!seen.numbers.has(n)) problems.push(`the number ${m[1]} did not come from a query`);
   }
@@ -75,8 +75,13 @@ export function validateAnswer(text: string, evidence: Evidence[], allNames: str
     if (!seen.numbers.has(w.value)) problems.push(`the number "${w.word}" did not come from a query`);
   }
 
-  const pathResults = evidence.filter((e) => (e.output as { total?: number })?.total !== undefined);
-  if (pathResults.length && pathResults.every((e) => (e.output as { total: number }).total === 0)) {
+  // Path counts live under different names: `total` (investigate), `before.paths` (fix_plan), `totalPaths` (company_exposure).
+  const pathTotal = (e: Evidence) => {
+    const o = e.output as { total?: number; totalPaths?: number; before?: { paths?: number } };
+    return o?.total ?? o?.totalPaths ?? (typeof o?.before === "object" ? o.before?.paths : undefined);
+  };
+  const pathResults = evidence.filter((e) => pathTotal(e) !== undefined);
+  if (pathResults.length && pathResults.every((e) => pathTotal(e) === 0)) {
     if (/\b(safe|no risk|nothing breaks|not at risk|cannot reach)\b/i.test(bare)) {
       problems.push("claims safety, but zero paths only means none are modeled");
     }
@@ -88,6 +93,36 @@ export function validateAnswer(text: string, evidence: Evidence[], allNames: str
 type Out = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 const last = (evidence: Evidence[], tool: string) => [...evidence].reverse().find((e) => e.tool === tool)?.output as Out | undefined;
+
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
+function planSentences(plan: Out): string {
+  const who = plan.scope === "identity" ? `\`${plan.identity}\`` : "the company";
+  if (!plan.steps.length) {
+    return `No path from ${who} to a crown jewel is modeled, so there is nothing to plan. That means none is recorded, not that none exists.`;
+  }
+  const head =
+    plan.scope === "identity"
+      ? `${who} has ${plan.before.paths} attack paths to the crown jewels. These ${plan.steps.length} fixes would bring that to ${plan.after.paths}.`
+      : `${plan.before.users} users can reach the crown jewels, over ${plan.before.paths} paths. These ${plan.steps.length} fixes would bring that to ${plan.after.users} users and ${plan.after.paths} paths.`;
+  const steps = (plan.steps as Out[]).map(
+    (s, i) => `${["First", "Second", "Third", "Fourth", "Fifth"][i] ?? "Then"}, the ${s.type} link from \`${s.from}\` to \`${s.to}\` cuts ${plural(s.killed, "path", "paths")}, leaving ${s.pathsAfter}.`,
+  );
+  return `${head} ${steps.join(" ")} Each one is a draft: a person approves it in the interface.`;
+}
+
+function exposureSentences(x: Out): string {
+  if (!x.totalPaths) {
+    return `No user can reach a crown jewel in the modeled graph. That means none is recorded, not that none exists.`;
+  }
+  const top = x.edges?.[0];
+  return (
+    `${x.users} of ${x.usersTotal} users can reach a crown jewel, over ${x.totalPaths} paths.` +
+    (top
+      ? ` The busiest link is the ${top.type} link from \`${top.from}\` to \`${top.to}\`. It sits on ${top.paths} paths (${top.percent}%) and ${plural(top.users, "user is", "users are")} routed through it.`
+      : "")
+  );
+}
 
 // A sentence built from rows only. Used when the model's text fails the check, or no model is available.
 export function summarize(evidence: Evidence[]): string {
@@ -110,6 +145,10 @@ export function summarize(evidence: Evidence[]): string {
   }
 
   const parts: string[] = [];
+  const plan = last(evidence, "fix_plan");
+  if (plan?.status === "ok") parts.push(planSentences(plan));
+  const exposure = last(evidence, "company_exposure");
+  if (exposure?.status === "ok") parts.push(exposureSentences(exposure));
   if (paths?.status === "ok") {
     if (paths.total === 0) {
       parts.push(

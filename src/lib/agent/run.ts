@@ -20,6 +20,8 @@ Rules:
 - For a compromised identity: call investigate once. It returns the paths, the best fix, its effect and a draft ticket. Use the other tools only for follow-up questions.
 - If a tool says unknown_entity, say that name is not in the graph and stop. Do not guess a nearby name.
 - If a result has zero paths, say none is modeled. Never say the identity is safe.
+- If the user asks for a plan, or which few things to fix ("what is the plan", "what 3 changes"), call fix_plan: with an identity for one person, without one for the whole company. Each step is advice, a person approves it. Say how many paths each step cuts and where the count ends. Never say anyone is secure or safe afterwards: zero paths means none is modeled.
+- For questions about the whole company ("who can reach the crown jewels", "what is our biggest exposure"), call company_exposure.
 - If the user asks whether an earlier fix still holds, or what changed, call recall_fixes and new_paths_since_last_fix.
 - Write plain English, 3 to 5 short sentences, no lists, no numbered steps.
 - Put every user, group, host or secret name in backticks, exactly as the tool returned it.
@@ -40,7 +42,8 @@ async function offline(message: string, tenant: string | undefined, emit: (e: Ag
   const names = await allNames(tenant);
   const lower = message.toLowerCase();
   const hit = names.filter((n) => /[.\-]/.test(n)).find((n) => lower.includes(n.toLowerCase()));
-  const candidate = hit ?? message.match(/[a-z][\w.-]{2,}/gi)?.find((w) => w.includes(".")) ?? message.trim().slice(0, 60);
+  const named = hit ?? message.match(/[a-z][\w.-]{2,}/gi)?.find((w) => w.includes(".") && !w.endsWith("."));
+  const candidate = named ?? message.trim().slice(0, 60);
   const tools = buildTools(tenant, (e) => log.push(e));
   const run = async (name: keyof typeof tools, input: Record<string, unknown>) => {
     emit({ type: "tool", name, input });
@@ -54,6 +57,22 @@ async function offline(message: string, tenant: string | undefined, emit: (e: Ag
   if (/still hold|hold up|changed|new path|since|last fix|drift|re-?scan/i.test(message)) {
     await run("recall_fixes", { identity: who });
     await run("new_paths_since_last_fix", { identity: who });
+    return;
+  }
+  // Plan and company questions come before the single-identity default.
+  const wantsPlan = /\bplan\b|what (?:\d+|two|three|four|five) (?:changes|things|fixes)|which (?:\d+|two|three|four|five) /i.test(message);
+  const company = /company|everyone|everybody|organi[sz]ation|across|all users|whole|overall/i.test(message);
+  const words: Record<string, number> = { two: 2, three: 3, four: 4, five: 5 };
+  const asked = message.match(/\b([1-5])\b/)?.[1] ?? lower.match(/\b(two|three|four|five)\b/)?.[1];
+  const steps = asked ? (words[asked] ?? Number(asked)) : 3;
+  if (wantsPlan) {
+    // A name that is not in the graph still goes to the tool, so the answer is the fixed "unknown" one.
+    if (!company && (r.found || named)) await run("fix_plan", { identity: who, steps });
+    else await run("fix_plan", { steps });
+    return;
+  }
+  if (company && !r.found) {
+    await run("company_exposure", { top: 5 });
     return;
   }
   await run("investigate", { identity: who });

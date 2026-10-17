@@ -1,20 +1,26 @@
 "use client";
 
 import { MagnifyingGlass, Scissors } from "@phosphor-icons/react";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AgentEvent } from "@/lib/agent/run";
 import type { FixDraft, FixRecord } from "@/lib/graph/fixes";
+import { buildLink, readLink } from "@/lib/permalink";
 import { analyze, type PathGraph } from "@/lib/view";
 import { Console, type Line } from "./Console";
 import { Counter } from "./Counter";
 import { GraphView } from "./GraphView";
+import { ImportPanel } from "./ImportPanel";
 import { Memory } from "./Memory";
+import { Plan } from "./Plan";
+import { ShareLink } from "./ShareLink";
 import { Ticket } from "./Ticket";
 
 interface Choke { id: string; type: string; from: string; to: string; note: string; paths: number; percent: number }
-type Loaded = PathGraph & { choke: Choke[]; fixes: FixRecord[] };
+type Dataset = { name: string; custom: boolean };
+type Loaded = PathGraph & { choke: Choke[]; fixes: FixRecord[]; sandbox: boolean; dataset: Dataset };
 
 const DEMO = "alice.moreno";
+const DEMO_DATASET: Dataset = { name: "Northwind Freight", custom: false };
 
 // Never throws: a failed call comes back as { ok: false } with a message the page can show.
 async function call(url: string, init?: RequestInit): Promise<{ ok: boolean; body: Record<string, unknown> }> {
@@ -40,6 +46,10 @@ export function Workbench() {
   const [asking, setAsking] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [problem, setProblem] = useState<{ text: string; suggestions: string[] } | null>(null);
+  const [sandbox, setSandbox] = useState(false);
+  const [dataset, setDataset] = useState<Dataset>(DEMO_DATASET);
+  // Bumped whenever the graph changes, so the fix plan is worked out again.
+  const [version, setVersion] = useState(0);
   const loadSeq = useRef(0);
   const pickSeq = useRef(0);
 
@@ -60,6 +70,8 @@ export function Workbench() {
     setNotice(null);
     const loaded = body as unknown as Loaded;
     setData(loaded);
+    setSandbox(loaded.sandbox);
+    setDataset(loaded.dataset);
     if (!keepFocus) {
       setFocus(loaded.choke[0]?.id ?? null);
       setCut(false);
@@ -137,6 +149,34 @@ export function Workbench() {
     void ask(`${g?.from ?? who} is compromised. What do we fix first?`.slice(0, 500));
   }, [load, pick, ask]);
 
+  // On page load: learn which graph this visitor has, then open a shared link if there is one.
+  useEffect(() => {
+    let live = true;
+    void (async () => {
+      const s = await call("/api/session");
+      if (!live) return;
+      if (s.ok) {
+        setSandbox(Boolean(s.body.sandbox));
+        if (s.body.dataset) setDataset(s.body.dataset as Dataset);
+      }
+      const link = readLink(window.location.search);
+      if (!link.from) return;
+      setName(link.from);
+      const g = await load(link.from);
+      if (!g || !live) return;
+      const known = link.edge && (g.choke.some((c) => c.id === link.edge) || g.edges.some((e) => e.id === link.edge));
+      await pick(g.from, known ? link.edge! : g.choke[0]?.id ?? null);
+    })();
+    return () => { live = false; };
+  }, [load, pick]);
+
+  // Keep the address bar in step with what is on screen, so the URL can be shared.
+  useEffect(() => {
+    if (!data) return;
+    const url = new URL(buildLink(window.location.origin, { from: data.from, edge: focus ?? undefined }));
+    window.history.replaceState(null, "", url.pathname + url.search);
+  }, [data, focus]);
+
   const stats = useMemo(() => {
     if (!data) return null;
     const c = data.choke.find((x) => x.id === focus);
@@ -157,6 +197,7 @@ export function Workbench() {
     const r = await post("/api/fix", { from: data.from, edgeId: focus });
     if (!r.ok) setNotice(typeof r.body.error === "string" ? r.body.error : "The fix could not be saved.");
     await load(data.from, true);
+    setVersion((v) => v + 1);
     setCut(false);
     setBusy(false);
   };
@@ -166,6 +207,7 @@ export function Workbench() {
     const r = await post("/api/drift");
     if (!r.ok) setNotice(typeof r.body.error === "string" ? r.body.error : "Could not add the permission.");
     await load(data.from, true);
+    setVersion((v) => v + 1);
     setBusy(false);
   };
   const rescan = async () => {
@@ -185,8 +227,29 @@ export function Workbench() {
       setFocus(null);
       setCut(false);
       setProblem(null);
+      setDataset(DEMO_DATASET);
+      setVersion((v) => v + 1);
+      window.history.replaceState(null, "", window.location.pathname);
     }
     setBusy(false);
+    return r.ok;
+  };
+  const backToDemo = async () => {
+    if (await reset()) setName(DEMO);
+  };
+  const imported = (r: { suggested: string; dataset: Dataset }) => {
+    loadSeq.current++;
+    setData(null);
+    setLines([]);
+    setDraft(null);
+    setFocus(null);
+    setCut(false);
+    setProblem(null);
+    setNotice(null);
+    setDataset(r.dataset);
+    setVersion((v) => v + 1);
+    setName(r.suggested);
+    void scan(r.suggested);
   };
 
   const caption = data
@@ -201,7 +264,7 @@ export function Workbench() {
     <main className="shell">
       <header className="top">
         <h1>Choke Point</h1>
-        <p>Northwind Freight · synthetic graph · FalkorDB</p>
+        <p>{dataset.name} · {dataset.custom ? "your data" : "synthetic graph"} · FalkorDB</p>
       </header>
 
       <div className="cols">
@@ -255,16 +318,23 @@ export function Workbench() {
                   <button className="btn" onClick={() => setCut((c) => !c)}><Scissors size={16} weight="bold" />{cut ? "Put it back" : "Preview the cut"}</button>
                 </div>
               )}
+              <div className="share"><ShareLink getUrl={() => buildLink(window.location.origin, { from: data.from, edge: focus ?? undefined })} /></div>
             </>
           ) : (
             <p className="empty">{problem ? "Pick a name from the graph and trace again." : "Pick who was compromised. The graph will show every route to the crown jewels, and the one link worth cutting."}</p>
           )}
+          <Plan identity={data?.from ?? null} version={version} onPickEdge={(id) => { if (data) void pick(data.from, id); }} />
         </div>
 
         <aside className="side">
           <Console lines={lines} busy={asking} identity={data?.from ?? null} onAsk={(t) => void ask(t)} />
-          <Ticket draft={draft?.edgeId === focus ? draft : null} cut={cut} busy={busy} approved={approved} onApprove={() => void approve()} />
-          <Memory fixes={data?.fixes ?? []} busy={busy} onDrift={() => void drift()} onRescan={() => void rescan()} onReset={() => void reset()} />
+          <Ticket
+            draft={draft?.edgeId === focus ? draft : null} cut={cut} busy={busy} approved={approved} onApprove={() => void approve()}
+            identity={data?.from} pathsBefore={data?.total ?? null} pathsAfter={cut ? stats?.left ?? null : null}
+            edge={stats?.edge ? { type: stats.edge.type, from: stats.edge.from, to: stats.edge.to, id: stats.edge.id, note: stats.edge.note } : undefined}
+          />
+          <Memory fixes={data?.fixes ?? []} busy={busy} demo={!dataset.custom} onDrift={() => void drift()} onRescan={() => void rescan()} onReset={() => void reset()} />
+          <ImportPanel sandbox={sandbox} custom={dataset.custom} busy={busy} onImported={imported} onBackToDemo={() => void backToDemo()} />
         </aside>
       </div>
     </main>

@@ -40,13 +40,81 @@ function topoOrder(g: PathGraph, edges: ViewEdge[]) {
   return { order, out };
 }
 
+// Same limits as the server: at most this many edges per walk, and a cap on work for tangled graphs.
+const MAX_WALK = 10;
+const STEP_CAP = 200_000;
+
+// Walks from the identity to a crown node, each edge used at most once per walk and at most MAX_WALK edges.
+// This is what Cypher `*1..10` counts, so it also holds when group nesting loops back on itself.
+export function countWalks(g: PathGraph, edges: ViewEdge[], stepCap = STEP_CAP) {
+  const crown = new Map(g.nodes.map((n) => [n.id, n.crown]));
+  const out = new Map<string, ViewEdge[]>();
+  const into = new Map<string, string[]>();
+  for (const e of edges) {
+    if (!out.has(e.source)) out.set(e.source, []);
+    out.get(e.source)!.push(e);
+    if (!into.has(e.target)) into.set(e.target, []);
+    into.get(e.target)!.push(e.source);
+  }
+  // Only walk toward nodes that can still reach a crown node.
+  const useful = new Set<string>();
+  const queue = g.nodes.filter((n) => n.crown).map((n) => n.id);
+  for (const id of queue) useful.add(id);
+  while (queue.length) {
+    for (const p of into.get(queue.shift()!) ?? []) {
+      if (useful.has(p)) continue;
+      useful.add(p);
+      queue.push(p);
+    }
+  }
+
+  const edgeUse = new Map<string, number>(edges.map((e) => [e.id, 0]));
+  const used = new Set<string>();
+  const stack: ViewEdge[] = [];
+  let total = 0;
+  let steps = 0;
+  let capped = false;
+  const walk = (at: string) => {
+    if (stack.length >= MAX_WALK) return;
+    for (const e of out.get(at) ?? []) {
+      if (capped) return;
+      if (used.has(e.id) || !useful.has(e.target)) continue;
+      if (++steps > stepCap) {
+        capped = true;
+        return;
+      }
+      used.add(e.id);
+      stack.push(e);
+      if (crown.get(e.target)) {
+        total += 1;
+        for (const s of stack) edgeUse.set(s.id, (edgeUse.get(s.id) ?? 0) + 1);
+      }
+      walk(e.target);
+      stack.pop();
+      used.delete(e.id);
+    }
+  };
+  walk(g.from);
+  return capped ? { total, edgeUse, capped: true as const } : { total, edgeUse };
+}
+
 // Counts paths from the compromised identity to any crown jewel, and how many paths use each edge.
-// Works on the attack-path subgraph, which is acyclic. Pass `without` to leave one edge out.
-export function analyze(g: PathGraph, without?: string) {
+// An acyclic graph is counted with fast dynamic programming. A graph with a loop is counted by walking
+// it edge by edge, like the server does, and `capped` is set if that gave up early. Pass `without` to leave one edge out.
+export function analyze(g: PathGraph, without?: string): { total: number; edgeUse: Map<string, number>; capped?: boolean } {
   const edges = g.edges.filter((e) => e.id !== without);
   const { order, out } = topoOrder(g, edges);
-  const crown = new Map(g.nodes.map((n) => [n.id, n.crown]));
+  if (order.length < g.nodes.length) return countWalks(g, edges);
 
+  // A chain longer than the server's limit would be counted here but not there.
+  const hops = new Map<string, number>([[g.from, 0]]);
+  for (const n of order) {
+    if (!hops.has(n)) continue;
+    for (const e of out.get(n) ?? []) hops.set(e.target, Math.max(hops.get(e.target) ?? 0, hops.get(n)! + 1));
+  }
+  if (Math.max(...hops.values()) > MAX_WALK) return countWalks(g, edges);
+
+  const crown = new Map(g.nodes.map((n) => [n.id, n.crown]));
   const fwd = new Map<string, number>([[g.from, 1]]);
   for (const n of order) {
     for (const e of out.get(n) ?? []) fwd.set(e.target, (fwd.get(e.target) ?? 0) + (fwd.get(n) ?? 0));
@@ -64,11 +132,25 @@ export function analyze(g: PathGraph, without?: string) {
 }
 
 // Left-to-right layers: column = longest distance from the identity, crown jewels in the last column.
+// When the graph has a loop there is no longest distance, so columns are the shortest distance instead.
 export function layout(g: PathGraph, colW = 210, rowH = 64) {
   const { order, out } = topoOrder(g, g.edges);
   const depth = new Map<string, number>([[g.from, 0]]);
-  for (const n of order) {
-    for (const e of out.get(n) ?? []) depth.set(e.target, Math.max(depth.get(e.target) ?? 0, (depth.get(n) ?? 0) + 1));
+  if (order.length < g.nodes.length) {
+    const queue = [g.from];
+    while (queue.length) {
+      const n = queue.shift()!;
+      for (const e of out.get(n) ?? []) {
+        if (!depth.has(e.target)) {
+          depth.set(e.target, depth.get(n)! + 1);
+          queue.push(e.target);
+        }
+      }
+    }
+  } else {
+    for (const n of order) {
+      for (const e of out.get(n) ?? []) depth.set(e.target, Math.max(depth.get(e.target) ?? 0, (depth.get(n) ?? 0) + 1));
+    }
   }
   const max = Math.max(...depth.values(), 0);
   for (const n of g.nodes) if (n.crown) depth.set(n.id, max);

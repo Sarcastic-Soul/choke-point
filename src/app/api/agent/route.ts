@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { runAgent, type AgentEvent } from "@/lib/agent/run";
 import { allow, sameOrigin } from "@/lib/guard";
+import { tenantFor } from "@/lib/tenant";
 
 export const maxDuration = 60;
 
@@ -16,6 +17,8 @@ export async function POST(req: Request) {
   // Past the daily model budget the agent keeps working in offline mode: same queries, answer built from the rows.
   const offlineOnly = !(await allow("agent", Number(process.env.AGENT_DAILY_LIMIT ?? 400), DAY));
 
+  const tenant = await tenantFor();
+
   const enc = new TextEncoder();
   let open = true;
   const stream = new ReadableStream({
@@ -29,7 +32,7 @@ export async function POST(req: Request) {
         }
       };
       try {
-        await runAgent(parsed.data.message, emit, undefined, { offlineOnly, signal: req.signal });
+        await runAgent(parsed.data.message, emit, tenant, { offlineOnly, signal: req.signal });
       } catch (err) {
         console.error("agent failed", err);
         emit({ type: "error", text: "The agent could not finish. Check that the database is reachable and try again." });

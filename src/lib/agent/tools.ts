@@ -3,6 +3,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { draftFix, newPathsSince, recallFixes } from "../graph/fixes";
+import { companyExposure, fixPlan } from "../graph/plan";
 import {
   attackPaths,
   chokePoints,
@@ -138,6 +139,32 @@ export function buildTools(tenant: string | undefined, log: (e: Evidence) => voi
         if (!edge) return { status: "unknown_edge" as const, edgeId };
         return { status: "ok" as const, draft: draftFix(edge) };
       }),
+    }),
+
+    fix_plan: tool({
+      description:
+        "Work out the best few fixes in order, each one cutting the most paths that are still left. With an identity it plans for that one identity. Without one it plans for the whole company. It is advice only: nothing changes until a person approves each fix.",
+      inputSchema: z.object({ identity: identity.optional(), steps: z.number().int().min(1).max(5).default(3) }),
+      execute: wrap("fix_plan", async ({ identity, steps }) => {
+        if (identity) {
+          const c = await check(identity, tenant);
+          if (!c.ok) return c.out;
+          const plan = await fixPlan({ identity: c.name, steps, tenant });
+          return { status: "ok" as const, ...plan, stepCount: plan.steps.length };
+        }
+        const plan = await fixPlan({ steps, tenant });
+        return { status: "ok" as const, ...plan, stepCount: plan.steps.length };
+      }),
+    }),
+
+    company_exposure: tool({
+      description:
+        "Company-wide view: how many users can reach a crown jewel, and the links that sit on the most attack paths across all of them, with the number of users routed through each.",
+      inputSchema: z.object({ top: z.number().int().min(1).max(10).default(5) }),
+      execute: wrap("company_exposure", async ({ top }) => ({
+        status: "ok" as const,
+        ...(await companyExposure({ top, tenant })),
+      })),
     }),
 
     recall_fixes: tool({

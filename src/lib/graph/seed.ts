@@ -1,14 +1,17 @@
-import { generate } from "../data/generate";
+import { generate, type Dataset } from "../data/generate";
 import { getGraph, graphName } from "./client";
 
-// Builds the whole graph for one tenant from the generator. Deletes what was there, including memory.
-export async function seedGraph(tenant?: string) {
-  const data = generate();
+// Deletes the tenant graph if it exists. A graph that was never made is not an error.
+async function wipe(tenant?: string) {
   try {
     await (await getGraph(tenant)).delete();
   } catch {
     // graph did not exist yet
   }
+}
+
+// Writes nodes and edges into an empty tenant graph. Shared by the demo seed and the importer.
+export async function writeGraph(tenant: string | undefined, data: Dataset) {
   const g = await getGraph(tenant);
 
   for (const kind of ["User", "Group", "Host", "Secret", "Entity"]) {
@@ -39,6 +42,7 @@ export async function seedGraph(tenant?: string) {
     const rows = data.edges
       .filter((e) => e.type === type)
       .map((e) => ({ id: e.id, from: e.from, to: e.to, note: e.note ?? "" }));
+    if (!rows.length) continue;
     await g.query(
       `UNWIND $rows AS r
        MATCH (a:Entity {name: r.from}), (b:Entity {name: r.to})
@@ -54,4 +58,21 @@ export async function seedGraph(tenant?: string) {
     nodes: Number((n.data?.[0] as { nodes: number }).nodes),
     edges: Number((e.data?.[0] as { edges: number }).edges),
   };
+}
+
+// Builds the whole graph for one tenant from the generator. Deletes what was there, including memory.
+export async function seedGraph(tenant?: string) {
+  const data = generate();
+  await wipe(tenant);
+  return writeGraph(tenant, data);
+}
+
+// Replaces the tenant graph with the visitor's data. The :Meta node is not an :Entity, so no query sees it.
+export async function importGraph(tenant: string, data: Dataset, meta: { name: string }) {
+  await wipe(tenant);
+  const written = await writeGraph(tenant, data);
+  await (await getGraph(tenant)).query(`CREATE (:Meta {k: 'dataset', name: $name, custom: true})`, {
+    params: { name: meta.name },
+  });
+  return written;
 }

@@ -9,9 +9,11 @@ interface Props {
   onDrift: () => void;
   onRescan: () => void;
   onReset: () => void;
+  /** The grant-a-permission demo only fits the Northwind data. */
+  demo?: boolean;
 }
 
-export function Memory({ fixes, busy, onDrift, onRescan, onReset }: Props) {
+export function Memory({ fixes, busy, onDrift, onRescan, onReset, demo = true }: Props) {
   return (
     <section className="memory" aria-label="Memory">
       <h2>Memory</h2>
@@ -26,7 +28,7 @@ export function Memory({ fixes, busy, onDrift, onRescan, onReset }: Props) {
         ))
       )}
       <div className="row">
-        <button className="btn" disabled={busy || fixes.length === 0} onClick={onDrift}><PlusCircle size={16} weight="bold" />Grant a new permission</button>
+        {demo && <button className="btn" disabled={busy || fixes.length === 0} onClick={onDrift}><PlusCircle size={16} weight="bold" />Grant a new permission</button>}
         <button className="btn" disabled={busy || fixes.length === 0} onClick={onRescan}><ArrowClockwise size={16} weight="bold" />Re-scan</button>
         <button className="btn" disabled={busy} onClick={onReset}><Trash size={16} weight="bold" />Reset demo</button>
       </div>

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { approveFix, FixError } from "@/lib/graph/fixes";
 import { resolveEntity } from "@/lib/graph/queries";
 import { sameOrigin } from "@/lib/guard";
+import { tenantFor } from "@/lib/tenant";
 
 const Body = z.object({ from: z.string().min(1).max(80), edgeId: z.string().min(1).max(200) });
 
@@ -11,9 +12,10 @@ export async function POST(req: Request) {
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "Send { from, edgeId }" }, { status: 400 });
   try {
-    const r = await resolveEntity(parsed.data.from);
+    const tenant = await tenantFor();
+    const r = await resolveEntity(parsed.data.from, tenant);
     if (!r.found) return Response.json({ error: "Unknown identity" }, { status: 404 });
-    return Response.json(await approveFix(r.entity.name, parsed.data.edgeId));
+    return Response.json(await approveFix(r.entity.name, parsed.data.edgeId, tenant));
   } catch (err) {
     if (err instanceof FixError) return Response.json({ error: err.message }, { status: 409 });
     console.error("approve failed", err);
