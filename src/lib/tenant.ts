@@ -42,17 +42,17 @@ async function exists(graph: string) {
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 // Makes sure `org:template` exists. Many first visitors can arrive at once on different serverless instances,
-// so one of them takes a Redis lock and builds it, and the rest wait for it.
+// so one of them builds it and the rest wait for it.
 // The build goes into a scratch graph first and is copied over in one step, so nobody can copy a half-built template.
 export async function ensureTemplate(): Promise<boolean> {
   const key = graphName(TEMPLATE);
   if (await exists(key)) return true;
 
-  const lock = "lock:choke-point-template";
-  const token = randomBytes(8).toString("hex");
-  const got = String(await raw(["SET", lock, token, "NX", "EX", "120"])) === "OK";
+  // FalkorDB Cloud does not let our user run SET or EVAL, so the lock is a counter in the guard graph:
+  // the first caller in each two-minute window gets to build, everyone else waits for the result.
+  const got = await allow("template-build", 1, 120_000);
   if (got) {
-    const scratch = `${TEMPLATE}-build-${token}`;
+    const scratch = `${TEMPLATE}-build-${randomBytes(8).toString("hex")}`;
     try {
       if (!(await exists(key))) {
         await seedGraph(scratch);
@@ -60,14 +60,6 @@ export async function ensureTemplate(): Promise<boolean> {
       }
     } finally {
       await (await getGraph(scratch)).delete().catch(() => undefined);
-      // Only release the lock if it is still ours (it may have timed out and been taken by someone else).
-      await raw([
-        "EVAL",
-        "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) end return 0",
-        "1",
-        lock,
-        token,
-      ]).catch(() => undefined);
     }
     return exists(key);
   }
